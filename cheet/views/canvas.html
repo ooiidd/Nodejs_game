@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>네트워크</title>
+    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css" rel="stylesheet" />
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+    <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript">
+       $(document).ready(function(){
+    	   
+    	   init();
+    	   console.log('sss');
+    	   socket.emit('test');
+            socket.on('connected', function(){
+                console.log('connected');
+            });
+            
+            // 매칭완료되었을 때
+            socket.on('completeMatch', function(data){
+                console.log('completeMatch!');
+                $('.lobby').hide();
+                $('.wait').hide();
+                $('.chat').show();
+            });
+            
+            //게임 데이터 처리
+            socket.on('game_data',function(data){
+            	viewColor(data.dataArray);
+            })
+            
+            // 대화를 받았을 때
+            socket.on('receiveMessage', function(data){
+                $('.chatResult').append('<li>' + data.message + '</li>');
+            });
+            // 상대방이 나갔을 때 나도 같이 로비로 나감.
+            socket.on('disconnect', function(data){
+            	$('.chatResult').empty();
+                console.log('disconnect');
+                $('.lobby').show();
+                $('.chat').hide();
+            });
+            
+            // 랜덤요청 시
+            $('#btnRequestRandomChat').click(function(){
+                $('.lobby').hide();
+                $('.wait').show();
+                socket.emit('requestRandomChat');
+            });
+            //test
+            $('#test').click(function(){
+            	init();
+            	socket.emit('test');
+            });
+            // 요청 취소 시
+            $('#btnCancelRequest').click(function(){
+                $('.lobby').show();
+                $('.wait').hide();
+                $('.chat').hide();
+                socket.emit('cancelRequest');
+            });
+            
+            // 엔터입력 시
+            $('#inputMessage').keyup(function(e){
+                if (e.keyCode == 13){
+                    send();
+                }
+            });
+            // 채팅 내용 전송 시
+            $('#btnChat').click(function(){
+                send();
+            });
+            
+            $('#exitbtn').click(function(){
+            	console.log('exitbtnClick');
+                socket.emit('ddd');
+            	$('.lobby').show();
+                $('.wait').hide();
+                $('.chat').hide();
+                $('.chatResult').empty();
+            });
+            $('#setbtn').click(function(){
+            	console.log('exitbtnClick');
+                socket.emit('testbtn');
+            });
+        });
+       function init(){
+    		//$('#content').empty();
+    		for(var i=0; i<10; i++){
+    			for(var j=0; j<10; j++){
+    				//$('#content').append("<input type='image' id='"+i+'and'+j+"'src='img/red.jpg'>ㅁ");
+    				document.getElementById(i+'and'+j).style.backgroundColor='#00f';
+    			}
+    			//$('#content').append("<br>");
+    			
+    		}
+    		
+    		var element = document.getElementById('rer');
+    		element.style.background = '#ff00aa';
+    		$('rer').css('background-color','#ff2200');
+    		document.getElementById('0and2').background-color="#ff0000";
+    		var tt = document.getElementById('rer').getContext("2d");
+    		tt.fillStyle="red";
+    		tt.fill();
+    		//$('#content2').append("<div width="45px" height="35px"></div>");
+    	}
+        function send(){
+            var message = $('#inputMessage').val();
+            if (message.length < 1){
+                alert('내용을 입력하세요.');
+                return;
+            }
+            socket.emit('sendMessage', {message:message});
+            $('#inputMessage').val('');
+        }
+        function viewColor(arr){
+        	
+        	for(var i=0;i<10;i++){
+        		
+        		for(var j=0;i<10;j++){
+        			if(arr[i][j]=='blue'){
+        				document.getElementById(i+'and'+j).bgcolor='#00f';
+        			}else if(arr[i][j]=='red'){
+        				document.getElementById(i+'and'+j).bgcolor='#f00';
+        			}else if(arr[i][j]=='green'){
+        				document.getElementById(i+'and'+j).bgcolor='#f00';
+        			}
+        		}
+        	}
+        }
+    </script>
+</head>
+<body>
+    <div class="lobby container">
+        <button id="btnRequestRandomChat" class="btn">채팅입장</button>
+    </div>
+    <div class="wait container" style="display:none">
+        <div>상대방을 기다리는 중...</div>
+        <button id="btnCancelRequest" class="btn">취소</button>
+    </div>
+    <div class="chat container" style="display:none">
+        <input type="text" id="inputMessage" class="input-medium search-query" />
+        <button type="submit" id="btnChat" class="btn">전송</button>
+        <button type="submit" id="setbtn" class="btn">바꾸기</button>
+        <button type="submit" id="exitbtn" class="btn">나가기</button>
+        <ul class="chatResult">
+        </ul>
+    </div>
+    <div id="dddd" bgcolor="#ff2233">asd</div>
+    <div id="content">
+    	<button id="test" class="btn">test</button>
+    	<table>
+    		<tr>
+    			<canvas id="rer" width="100" height="100" background-color="#123456"></canvas>
+    			<canvas id="0and0" width="100" height="100" style="background-color: black;"></canvas>
+    			<canvas id="0and1" width="100" height="100" style="background-color: black;"></canvas>
+    			<canvas id="0and2" width="100" height="100" style="background-color: black;"></canvas>
+    			<canvas id="0and3" width="100" height="100" style="background-color: black;"></canvas>
+    			<canvas id="0and4" width="100" height="100" style="background-color: black;"></canvas>
+    		</tr>
+    		<tr>
+    			<td id="1and0">a</td>
+    			<td id="1and1">a</td>
+    			<td id="1and2">a</td>
+    			<td id="1and3">a</td>
+    			<td id="1and4">a</td>
+    			<td id="rer" bgcolor="#00ff00">rer</td>
+    		</tr>
+    	</table>
+    </div>
+</body>
+</html>

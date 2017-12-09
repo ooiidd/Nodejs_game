@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>COLOR VIRUS</title>
+    
+    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css" rel="stylesheet" />
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+    <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript">
+        var socket = io.connect('http://<%=host%>');
+        
+        $(document).ready(function(){
+            socket.on('connected', function(){
+                console.log('connected');
+            });
+            
+            // 매칭완료되었을 때
+            socket.on('completeMatch', function(data){
+                console.log('completeMatch!');
+                $('#text_nick1').val(data.gamer1);
+                $('#text_nick').val(data.gamer2);
+                $('.lobby').hide();
+                $('.wait').hide();
+                $('.chat').show();
+
+
+               document.getElementById('red_p1').disabled=true;
+               document.getElementById('blue_p1').disabled=true;
+               document.getElementById('green_p1').disabled=true;
+               document.getElementById('green_blue_p1').disabled=true;
+               
+               document.getElementById('red_p2').disabled=true;
+               document.getElementById('blue_p2').disabled=true;
+               document.getElementById('green_p2').disabled=true;
+               document.getElementById('green_blue_p2').disabled=true;
+              
+                console.log($('#text_nick').val());
+                console.log(data.gamer1);
+                if(data.gamer1==$('#nickname').val()){
+                   $('#player_check').val(1);
+                   $('#player1').show();
+                   $('#player2').show();
+                   document.getElementById("body").style.backgroundImage='';
+                   document.getElementById("body").style.backgroundColor= '#453232';
+                   
+                   $('#1p').show();
+                   $('#p1_ready').show();
+                   console.log("if");
+                   $('#p1_button').show();
+                   $('#gameboardtable').show();
+                   $('#ruletable').show();
+                }else{
+                   document.getElementById("body").style.backgroundImage='';
+                   document.getElementById("body").style.backgroundColor='#453232';
+                     $('#player_check').val(2);
+                   $('#2p').show();
+                   $('#player1').show();
+                   $('#player2').show();
+                   
+                   console.log("else");
+                   $('#p2_ready').show();
+                   $('#p2_button').show();
+                   $('#gameboardtable').show();
+                   $('#ruletable').show();
+                }
+                for(var j=1;j<11;j++)
+                   for(var k=1;k<11;k++){
+                      if((j==1 && k==1) || (j==10 && k==10))
+                         continue;
+                      switch(data.dataArray[j][k]){
+                      case 0:
+                         document.getElementById(j+'and'+k).style.backgroundColor='red';
+                         break;
+                      case 1:
+                         document.getElementById(j+'and'+k).style.backgroundColor='green';
+                         break;
+                      case 2:
+                         document.getElementById(j+'and'+k).style.backgroundColor='blue';
+                         break;
+                      case 3:
+                         document.getElementById(j+'and'+k).style.backgroundColor='yellow';
+                         break;
+                      }
+                   }
+                document.getElementById('1and1').style.backgroundColor='#000';
+                document.getElementById('10and10').style.backgroundColor='#fff';
+            });
+            //게임판 바꿔주기
+            socket.on('gamedata_ToClient', function(data){
+               console.log('gamedata receive');
+               $('#score').text(data.gamer1_col.length+' : '+data.gamer2_col.length);
+               $('#p1_turn').hide();
+               $('#p2_turn').hide();
+               for(var j=1;j<11;j++)
+                   for(var k=1;k<11;k++){
+                      if((j==1 && k==1) || (j==10 && k==10))
+                         continue;
+                      switch(data.dataArray[j][k]){
+                      case 0:
+                         document.getElementById(j+'and'+k).style.backgroundColor='red';
+                         break;
+                      case 1:
+                         document.getElementById(j+'and'+k).style.backgroundColor='green';
+                         break;
+                      case 2:
+                         document.getElementById(j+'and'+k).style.backgroundColor='blue';
+                         break;
+                      case 3:
+                         document.getElementById(j+'and'+k).style.backgroundColor='yellow';
+                         break;
+                      case 11:
+                         console.log('11');
+                         document.getElementById(j+'and'+k).style.backgroundColor='#000';
+                         break;
+                      case 12:
+                         console.log('12');
+                         document.getElementById(j+'and'+k).style.backgroundColor='#fff';
+                         break;
+                      }
+                   }
+               if(data.turn==$('#player_check').val()){
+                  document.getElementById('red_p'+$('#player_check').val()).disabled=false;
+                   document.getElementById('blue_p'+$('#player_check').val()).disabled=false;
+                   document.getElementById('green_p'+$('#player_check').val()).disabled=false;
+                   document.getElementById('green_blue_p'+$('#player_check').val()).disabled=false;
+                   $('#p'+data.turn+'_turn').show();
+               }else{
+                  document.getElementById('red_p'+$('#player_check').val()).disabled=true;
+                   document.getElementById('blue_p'+$('#player_check').val()).disabled=true;
+                   document.getElementById('green_p'+$('#player_check').val()).disabled=true;
+                   document.getElementById('green_blue_p'+$('#player_check').val()).disabled=true;
+                   var k;
+                   if(data.turn==1){
+                      k=1;
+                      console.log('if')
+                   }
+                   else{
+                      console.log('else')
+                      k=2;
+                   }
+                   console.log(k);
+                   $('#p'+k+'_turn').show();
+               }
+            });
+            //게임 끝
+            socket.on('game_end',function(data){
+               console.log('게임 끝처리');
+               if(data.gamer1_col.length==50){
+                  alert("Draw");
+                  disc();
+                  socket.emit('disconnect2');
+               }
+               else if((data.gamer1==$('#nickname').val()) && (data.gamer1_col.length > 50)){
+                  alert("You Win");
+                  disc();
+                  socket.emit('disconnect2');
+                  
+               }
+               else if((data.gamer2==$('#nickname').val()) && (data.gamer2_col.length > 50)){
+                  alert("You Win");
+                  disc();
+                  socket.emit('disconnect2');
+                  
+               }
+               else {
+                  alert("You Lose");
+                  disc();
+                  socket.emit('disconnect2');
+                  
+               }
+            });
+            // 대화를 받았을 때
+            socket.on('receiveMessage', function(data){
+               console.log(data.from);
+               console.log(data.data.message);
+                $('.chatResult').append(data.from+ '   :   ' + data.data.message+'<br>' );
+            });
+            socket.on('ready_state', function(data){
+               if(data.gamer1_ready=='no'){
+               $('#p1_state').text("NOT READY");
+                  $('#p2_ready').text('준 비');
+               }else{
+                  $('#p1_state').text("READY");
+                  $('#p2_ready').text('시 작');
+               }
+               if(data.gamer2_ready=='no'){
+                  $('#p2_state').text("NOT READY");
+                  $('#p1_ready').text('준 비');
+               }else{
+                  $('#p2_state').text("READY");
+                  $('#p1_ready').text('시 작');
+               }
+               //게임 시작 체크
+               if(data.state=='start'){
+                  $('#p1_ready').hide();
+                  $('#p2_ready').hide();
+                  
+                  if(data.turn==$('#player_check').val()){
+
+                       document.getElementById('red_p'+data.turn).disabled=false;
+                       document.getElementById('blue_p'+data.turn).disabled=false;
+                       document.getElementById('green_p'+data.turn).disabled=false;
+                       document.getElementById('green_blue_p'+data.turn).disabled=false;
+                       $('#p1_turn').show();
+                       
+                    }else{
+                       
+                    }
+               }
+            });
+            socket.on('timer_set', function(data){
+               $('#timer').text(data.timer);
+            });
+            // 상대방이 나갔을 때 나도 같이 로비로 나감.
+            socket.on('disconnect', function(data){
+                console.log('disconnect');
+                disc();
+                $('.lobby').show();
+                $('.chat').hide();
+            });
+            
+            // 랜덤요청 시
+            $('#btnRequestRandomChat').click(function(){
+                $('.lobby').hide();
+                  $('#startimage').hide();
+                $('.wait').show();
+                $('#waitimage').show();
+                
+                var data = {"nickname":$("#nickname").val()};
+                socket.emit('requestRandomChat',data);
+            });
+            
+            // 요청 취소 시
+            $('#btnCancelRequest').click(function(){
+                $('.lobby').show();
+                  $('#startimage').show();
+                $('.wait').hide();
+                    $('#waitimage').hide();
+           
+                $('.chat').hide();
+                socket.emit('cancelRequest');
+                
+            });
+            
+            // 엔터입력 시
+            $('#inputMessage').keyup(function(e){
+                if (e.keyCode == 13){
+                    send();
+                }
+            });
+            // 채팅 내용 전송 시
+            $('#btnChat').click(function(){
+                send();
+            });
+            $('#red_p1').click(function(){
+               console.log('red');
+               var data = {'p_check':$('#player_check').val(),'color':'red'};
+               socket.emit('button_click',data);
+            });
+         $('#blue_p1').click(function(){
+               console.log('blue');
+               var data = {'p_check':$('#player_check').val(),'color':'blue'};
+               socket.emit('button_click',data);
+            });
+         $('#green_p1').click(function(){
+               console.log('green');
+               var data = {'p_check':$('#player_check').val(),'color':'green'};
+               socket.emit('button_click',data);
+         });
+         $('#green_blue_p1').click(function(){
+               console.log('green_blue');
+               var data = {'p_check':$('#player_check').val(),'color':'green_blue'};
+               socket.emit('button_click',data);
+         });
+         
+         $('#red_p2').click(function(){
+               console.log('red');
+               var data = {'p_check':$('#player_check').val(),'color':'red'};
+               socket.emit('button_click',data);
+            });
+         $('#blue_p2').click(function(){
+               console.log('blue');
+               var data = {'p_check':$('#player_check').val(),'color':'blue'};
+               socket.emit('button_click',data);
+            });
+         $('#green_p2').click(function(){
+               console.log('green');
+               var data = {'p_check':$('#player_check').val(),'color':'green'};
+               socket.emit('button_click',data);
+         });
+         $('#green_blue_p2').click(function(){
+               console.log('green_blue');
+               var data = {'p_check':$('#player_check').val(),'color':'green_blue'};
+               socket.emit('button_click',data);
+         });
+         
+         
+         $('#p2_ready').click(function(){
+               console.log('p2ready click');
+               var data = $('#player_check').val();
+               socket.emit('ready_click',data);
+         });
+         $('#p1_ready').click(function(){
+               console.log('p1ready click');
+               var data = $('#player_check').val();
+               socket.emit('ready_click',data);
+         });
+         
+        });
+        function disc(){
+           $('.chat').hide();
+           $('#player1').hide();
+           $('#player2').hide();
+           $('#1p').hide();
+           $('#p1_ready').hide();
+           $('#p1_button').hide();
+           $('#gameboardtable').hide();
+           $('#ruletable').hide();
+           $('#2p').hide();
+           $('#player1').hide();
+           $('#player2').hide();
+           
+           $('#p2_ready').hide();
+           $('#p2_button').hide();
+           $('#gameboardtable').hide();
+           $('#ruletable').hide();
+           $('#p1_turn').hide();
+           $('#p2_turn').hide();
+           $('.lobby').show();
+            $('.chat').hide();
+            $('#p1_ready').text('준 비');
+            $('#p1_ready').text('준 비');
+            $('#score').text('1 : 1');
+        }
+        function send(){
+            var message = $('#inputMessage').val();
+            if (message.length < 1){
+                alert('내용을 입력하세요.');
+                return;
+            }
+            socket.emit('sendMessage', {message:message});
+            $('#inputMessage').val('');
+        }
+    </script>
+    <style type="text/css">
+       #player1{
+          float:left;
+       }
+       #gameBoard{
+          float:left;
+       }
+       #player2{
+          float:left;
+       }
+    </style>
+     <style>
+    body{
+         }
+    </style>
+    </head>
+<body id="body" style="BACKGROUND-COLOR:#453232;BACKGROUND-IMAGE:URL('b1.gif');background-repeat:no-repeat;width:900px;height:580px;BACKGROUND-POSITION:200px 0px;Margin-Left:200px">   
+    <div class="lobby container" style="width:500px ;MARGIN-LEFT:65px;">
+         <p style="color:white;font-size : 26px; MARGIN-TOP:250px">Enter your name : <input id = "nickname" type="text" value style="width:180px;MARGIN-TOP:12px" >
+        <button id="btnRequestRandomChat"     class="btn">게임입장</button>
+    </div>
+    <div id="startimage">
+   <img src="004.gif" style="Margin-LEFT:240px;width:200px;">
+	</div>    
+    <div class="wait container" style="display:none; " >
+        <div id="waitimage" style="display:none">
+  		 <img src="wait.gif" style="MARGIN-TOP : 250px; Margin-LEFT:240px;width:200px;">
+			</div>    
+        <div style="font-size:26px;color:white; width: 190px; "><p style="MARGIN-LEFT : 210px; width: 501px">상대방을 기다리는 중..</p>
+        <button id="btnCancelRequest"style="width:80px;font-size:18px;Margin-LEFT:300px;" class="btn">취소</button></div>
+    </div>
+    <div id="gamdBoard" style="width: 460px;position:fixed;left:40px;top:12px;">
+    <div id="ruletable" style="MARGIN-LEFT:130px;display:none;">
+       <p style="font-size: 40px;MARGIN-TOP:10px; Color:white; MARGIN-LEFT:10px;">Timer : <span id="timer"style="font-size: 40px; ">0</span>
+       <p style="font-s	ize: 40px;MARGIN-TOP:20px;Color:white; ">Score : <span id="score"style="font-size: 40px; ">1 : 1</span>
+       </div>
+       
+       <div id="gameboardtable" style="display:none;WIDTH:520px;Margin-top:10px">
+       <table style="DISPLAY:NONE;" >
+          <tr>
+             <canvas id="1and1" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="1and2" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="1and3" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="1and4" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="1and5" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="1and6" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="1and7" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="1and8" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="1and9" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="1and10" width="40" height=40" style="background-color: black; MARGIN-LEFT:5px;"></canvas><br>
+             
+             <canvas id="2and1" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="2and2" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="2and3" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="2and4" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="2and5" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="2and6" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="2and7" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="2and8" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="2and9" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="2and10" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas><br>
+             
+             <canvas id="3and1" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="3and2" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="3and3" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="3and4" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="3and5" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="3and6" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="3and7" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="3and8" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="3and9" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="3and10" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas><br>
+             <canvas id="4and1" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="4and2" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="4and3" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="4and4" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="4and5" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="4and6" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="4and7" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="4and8" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="4and9" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="4and10" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas><br>
+             <canvas id="5and1" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="5and2" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="5and3" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="5and4" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="5and5" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="5and6" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="5and7" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="5and8" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="5and9" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas>
+             <canvas id="5and10" width="40" height="40" style="background-color: black; MARGIN-LEFT:5px;"></canvas><br>
+          
+             <canvas id="6and1" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px;"></canvas>
+             <canvas id="6and2" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="6and3" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="6and4" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="6and5" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="6and6" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="6and7" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="6and8" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="6and9" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="6and10" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas><br>
+             
+             <canvas id="7and1" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="7and2" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="7and3" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="7and4" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="7and5" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="7and6" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="7and7" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="7and8" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="7and9" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="7and10" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas><br>
+             
+             <canvas id="8and1" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="8and2" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="8and3" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="8and4" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="8and5" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="8and6" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="8and7" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="8and8" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="8and9" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="8and10" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas><br>
+             
+             <canvas id="9and1" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="9and2" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="9and3" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="9and4" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="9and5" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="9and6" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="9and7" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="9and8" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="9and9" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="9and10" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas><br>
+             
+             
+             <canvas id="10and1" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="10and2" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="10and3" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="10and4" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="10and5" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="10and6" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="10and7" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="10and8" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="10and9" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas>
+             <canvas id="10and10" width="40" height="40" style="background-color: black;MARGIN-LEFT:5px"></canvas><br>
+          </tr>
+       </table>
+       </div>
+    </div>
+    <div id = "player1" style="position:fixed;left:530px;top:330px;width: 180px;padding :10px;height:200px;BACKGROUND-color:yellow; display:none;">
+       <textarea id="text_nick1" rows="1" cols="20" readonly="readonly" style=" width:160px;MARGIN-LEFT:3px;"></textarea>
+       <p id="p1_state" style="font-size:18px;text-align:center">NOT READY</p>
+       <span id="p1_turn" style="display:none;background-color:red;">Turn!!</span>
+       <button id="p1_ready" class="btn" style="Margin-left:55px;display:none">준 비</button><br>
+       <br>
+       <div id="p1_button" style="display:none">
+          <button type="submit" id="red_p1" style="width:40px;height:40px;background-color: red;"></button>
+          <button type="submit" id="blue_p1" style="width:40px;height:40px;background-color: blue;"></button>
+          <button type="submit" id="green_p1" style="width:40px;height:40px;background-color: green;"></button>
+          <button type="submit" id="green_blue_p1" style="width:40px;height:40px;background-color: yellow;"></button>
+       </div>
+    </div>
+    <div id="player2" style="position:fixed;left:740px;top:330px;width: 180px;PADDING:10px; height:200px;BACKGROUND-color:yellow; display:none;">
+    <textarea id="text_nick" rows="1" cols="20" readonly="readonly"style="width:160px;"></textarea>
+          <textarea id="player_check" rows="" cols="5" style="display:none;MARGIN-LEFT:10px; "></textarea>
+       <p id="p2_state" style="font-size:18px;text-align:center">NOT READY</p>
+       <span id="p2_turn" style="display:none;background-color:red;">Turn!!</span>
+       <button id="p2_ready" class="btn" style="Margin-left:55px;display:none">준 비</button><br>
+       <br>
+       <div id="p2_button" style="display:none">
+          <button type="submit" id="red_p2" style="width:40px;height:40px;background-color: red;"></button>
+          <button type="submit" id="blue_p2" style="width:40px;height:40px;background-color: blue;"></button>
+          <button type="submit" id="green_p2" style="width:40px;height:40px;background-color: green;"></button>
+          <button type="submit" id="green_blue_p2" style="width:40px;height:40px;background-color: yellow;"></button>
+       </div>
+    </div>    
+    
+     <div class="chat container" style="position:fixed;left:530px;top:10px;display:none;BORDER:2px;Margin-right:30px;">
+        <div class="chatResult" COLS="205" style="background-color:#9bbad8;;MARGIN-TOP:20px;width:400px; overflow :scroll;height:200px;BORDER:4px ;">
+       </div><br>
+       <div>
+        <input type="text" id="inputMessage" class="input-medium search-query" style="width:300px;">&nbsp
+        <button type="submit" id="btnChat" class="btn"style="""> 전송</button>
+      </div>>    
+    </div>
+    </body>
+</html>
